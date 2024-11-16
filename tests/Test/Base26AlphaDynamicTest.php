@@ -28,7 +28,7 @@ class Base26AlphaDynamicTest extends TestCase
 
     public function test_bunny_regression(): void
     {
-        $a = 62969;
+        $a = 194481;
         $length = 3;
         $this->prepareBunny($a, $length, (26 ^ $length) - 1);
         for ($i = 0; $i < $this->bunny->getCapacity(); $i++) {

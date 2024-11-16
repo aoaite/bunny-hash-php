@@ -10,12 +10,12 @@ class BunnyHash
     protected string $capacity;
     protected string $modInv;
 
-    function __construct(protected string $a, protected FixedLenghtEncoder $encoder, protected ?string $offset = '0')
+    function __construct(protected string $multiplicator, protected FixedLenghtEncoder $encoder, protected ?string $offset = '0')
     {
         $this->capacity = $encoder->getCapacity();
 
         if ($this->offset == null) {
-            $this->offset = self::truncateDecimal(bcdiv($this->capacity, 2));
+            $this->offset = bcdiv($this->capacity, 2, 0);
         }
 
         if (bccomp($this->capacity, $this->offset) <= 0) {
@@ -26,7 +26,15 @@ class BunnyHash
             throw new ArithmeticError('Offset is negative');
         }
 
-        $this->modInv = self::modInv($this->a, $this->capacity);
+        if (bccomp($this->multiplicator, '0') == -1) {
+            throw new ArithmeticError('Multiplicator is negative');
+        }
+
+        if (bccomp(self::gcd($this->multiplicator, $this->capacity), '1') != 0) {
+            throw new ArithmeticError('Multipicator must be coprime to capacity');
+        }
+
+        $this->modInv = self::modInv($this->multiplicator, $this->capacity);
     }
 
     public function hash(string $input): string
@@ -34,11 +42,10 @@ class BunnyHash
         if (bccomp($input, '0') == -1) {
             throw new ArithmeticError('Input cannot be negative');
         }
-        $comp = bccomp($input, $this->capacity);
-        if ($comp == 0 || $comp > 0) {
+        if (bccomp($input, $this->capacity) >= 0) {
             throw new ArithmeticError('Input is too big to fit the hash lenght');
         }
-        return $this->encoder->encodeInt(bcmod(bcadd(bcmul($this->a, $input), $this->offset), $this->capacity));
+        return $this->encoder->encodeInt(bcmod(bcadd(bcmul($this->multiplicator, $input), $this->offset), $this->capacity));
     }
 
     public function reverse(string $hash): string
@@ -46,8 +53,7 @@ class BunnyHash
         if (strlen($hash) != $this->encoder->getLength()) {
             throw new ArithmeticError('Input has wrong length');
         }
-        $x = $this->encoder->decodeInt($hash);
-        return bcmod(bcmul(bcadd(bcsub($x, $this->offset), $this->capacity), $this->modInv), $this->capacity);
+        return bcmod(bcmul(bcadd(bcsub($this->encoder->decodeInt($hash), $this->offset), $this->capacity), $this->modInv), $this->capacity);
     }
 
     public function getCapacity(): string
@@ -67,7 +73,7 @@ class BunnyHash
         $x1 = '1';
 
         if (bcmod($number, $modulus) == '0') {
-            return null;
+            throw new ArithmeticError('Number is divisible by modulus');
         }
 
         while (bccomp($number, '1') > 0) {
@@ -89,8 +95,13 @@ class BunnyHash
         return $x1;
     }
 
-    private static function truncateDecimal(string $number): string
+    private static function gcd(string $number, string $capacity): string
     {
-        return explode('.', $number)[0];
+        while (bccomp($capacity, '0') == 1) {
+            $temp = $capacity;
+            $capacity = bcmod($number, $capacity);
+            $number = $temp;
+        }
+        return $number;
     }
 }
