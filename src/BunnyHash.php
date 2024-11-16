@@ -7,36 +7,57 @@ use ArithmeticError;
 
 class BunnyHash
 {
-    protected string $n;
+    protected string $capacity;
     protected string $modInv;
 
-    function __construct(protected string $a, protected Encoding $encoder, protected string $offset = '0')
+    function __construct(protected string $a, protected Encoding $encoder, protected ?string $offset = '0')
     {
-        $this->n = bcpow($this->encoder->getBase(), $this->encoder->getLength());
-        $this->modInv = self::modInv($this->a, $this->n);
+        $this->capacity = bcpow($this->encoder->getBase(), $this->encoder->getLength());
+
+        if ($this->offset == null) {
+            $this->offset = self::truncateDecimal(bcdiv($this->capacity, 2));
+        }
+
+        if (bccomp($this->capacity, $this->offset) <= 0) {
+            throw new ArithmeticError('Offset is bigger than or equal capacity');
+        }
+
+        if (bccomp($this->offset, '0') == -1) {
+            throw new ArithmeticError('Offset is negative');
+        }
+
+        $this->modInv = self::modInv($this->a, $this->capacity);
     }
 
-    public function hash(int $input): string
+    public function hash(string $input): string
     {
-        $x = strval($input);
-        if ($input < 0) {
+        if (bccomp($input, '0') == -1) {
             throw new ArithmeticError('Input cannot be negative');
         }
-        $comp = bccomp($x, $this->n);
+        $comp = bccomp($input, $this->capacity);
         if ($comp == 0 || $comp > 0) {
             throw new ArithmeticError('Input is too big to fit the hash lenght');
         }
-        return $this->encoder->encode(intval(bcmod(bcadd(bcmul($this->a, $x), $this->offset), $this->n)));
+        return $this->encoder->encode(intval(bcmod(bcadd(bcmul($this->a, $input), $this->offset), $this->capacity)));
     }
 
-    public function reverse(string $hash): int|null
+    public function reverse(string $hash): string
     {
         if (strlen($hash) != $this->encoder->getLength()) {
             throw new ArithmeticError('Input has wrong length');
         }
         $x = strval($this->encoder->decode($hash));
-        $result = bcmod(bcmul(bcadd(bcsub($x, $this->offset), $this->n), $this->modInv), $this->n);
-        return intval($result);
+        return bcmod(bcmul(bcadd(bcsub($x, $this->offset), $this->capacity), $this->modInv), $this->capacity);
+    }
+
+    public function getCapacity(): string
+    {
+        return $this->capacity;
+    }
+
+    public function getOffset(): string
+    {
+        return $this->offset;
     }
 
     private static function modInv(string $number, string $modulus): string
@@ -66,5 +87,10 @@ class BunnyHash
         }
 
         return $x1;
+    }
+
+    private static function truncateDecimal(string $number): string
+    {
+        return explode('.', $number)[0];
     }
 }
