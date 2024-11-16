@@ -7,7 +7,6 @@
         "ext-bcmath": "^8.0"
     },
     "require-dev": {
-        "php": "^8.0",
         "phpunit/phpunit": "^10"
     },
     "license": "MIT",
