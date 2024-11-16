@@ -2,7 +2,7 @@
 
 namespace Aoaite\BunnyHash;
 
-use Aoaite\BunnyHash\Encodings\Encoding;
+use Aoaite\BaseEncoders\FixedLenghtEncoder;
 use ArithmeticError;
 
 class BunnyHash
@@ -10,9 +10,9 @@ class BunnyHash
     protected string $capacity;
     protected string $modInv;
 
-    function __construct(protected string $a, protected Encoding $encoder, protected ?string $offset = '0')
+    function __construct(protected string $a, protected FixedLenghtEncoder $encoder, protected ?string $offset = '0')
     {
-        $this->capacity = bcpow($this->encoder->getBase(), $this->encoder->getLength());
+        $this->capacity = $encoder->getCapacity();
 
         if ($this->offset == null) {
             $this->offset = self::truncateDecimal(bcdiv($this->capacity, 2));
@@ -38,7 +38,7 @@ class BunnyHash
         if ($comp == 0 || $comp > 0) {
             throw new ArithmeticError('Input is too big to fit the hash lenght');
         }
-        return $this->encoder->encode(intval(bcmod(bcadd(bcmul($this->a, $input), $this->offset), $this->capacity)));
+        return $this->encoder->encodeInt(bcmod(bcadd(bcmul($this->a, $input), $this->offset), $this->capacity));
     }
 
     public function reverse(string $hash): string
@@ -46,7 +46,7 @@ class BunnyHash
         if (strlen($hash) != $this->encoder->getLength()) {
             throw new ArithmeticError('Input has wrong length');
         }
-        $x = strval($this->encoder->decode($hash));
+        $x = $this->encoder->decodeInt($hash);
         return bcmod(bcmul(bcadd(bcsub($x, $this->offset), $this->capacity), $this->modInv), $this->capacity);
     }
 

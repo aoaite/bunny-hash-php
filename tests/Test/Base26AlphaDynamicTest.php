@@ -2,9 +2,8 @@
 
 namespace Tests\Unit;
 
+use Aoaite\BaseEncoders\Encoders\Base26AlphaEncoder;
 use Aoaite\BunnyHash\BunnyHash;
-use Aoaite\BunnyHash\Encodings\Base26AlphaEncoding;
-use ArithmeticError;
 use PHPUnit\Framework\TestCase;
 
 class Base26AlphaDynamicTest extends TestCase
@@ -13,7 +12,7 @@ class Base26AlphaDynamicTest extends TestCase
 
     protected function prepareBunny(string $prime, int $length, ?string $offset): void
     {
-        $this->bunny = new BunnyHash($prime, new Base26AlphaEncoding($length), $offset);
+        $this->bunny = new BunnyHash($prime, new Base26AlphaEncoder($length), $offset);
     }
 
     public function test_bunny_hash_init(): void
