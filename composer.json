@@ -22,6 +22,11 @@
             "email": "me@dbak.ch",
             "homepage": "https://dbak.ch",
             "role": "Developer"
+        },
+        {
+            "name": "Cedric Riechers",
+            "email": "cedric.riechers@web.de",
+            "role": "Developer"
         }
     ],
     "funding": [
