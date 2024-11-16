@@ -65,4 +65,10 @@ class Base26AlphaStaticTest extends TestCase
         $this->expectException(ArithmeticError::class);
         $this->prepareBunny('961748941', 2, '-1');
     }
+
+    public function test_wrong_gcd_exceptions(): void
+    {
+        $this->expectException(ArithmeticError::class);
+        $this->prepareBunny('4', 2, null);
+    }
 }
