@@ -1,0 +1,14 @@
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/vendor/
+composer.lock
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+/.phpunit.cache
+/node_modules
